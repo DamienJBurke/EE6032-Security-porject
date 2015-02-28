@@ -6,7 +6,7 @@
 #include <Windows.h>    // needed by CHILKAT e.g. for SystemTime
 
 // added for CHILKAT
-#include "..\include\ckimap.h" 
+#include "..\include\ckimap.h"  
 //#include "..\include\tchar.h"
 //
 // need this for various things
@@ -32,8 +32,12 @@ using namespace std;
 const char* message = "This is the test message";
 
 
+
 //Function to pause your program - for debugging purposes. Could also use this command [ system("pause"); ]
 void key_press(void);
+void AES(const char* hash);
+std::string SHA1(const char* msg);
+void RSA(void);
 
 const char * prepared;
 
@@ -63,7 +67,7 @@ void key_press(void)
 	do {} while (!getchar());
 }
 
-void AES(void){
+void AES(std::string hashString){
 	CkCrypt2 crypt;
 	bool success = crypt.UnlockComponent("T12302015Crypt_sHyDCAFglR1v");
 	if (success != true) {
@@ -102,10 +106,14 @@ void AES(void){
 	//  the output should be 48 bytes (a multiple of 16).
 	//  Because the output is a hex string, it should
 	//  be 96 characters long (2 chars per byte).
+
+	//Convert hashString back to const char*
+	const char* hash = hashString.c_str();
 	const char * encStr;
 	printf("%s,\n", message);
-	encStr = crypt.encryptStringENC(message);
-	printf("Encrypted: %s\n", encStr);
+	printf("Encrypted: %s\n", hash);
+	encStr = crypt.encryptStringENC(hash);
+
 
 	//  Now decrypt:
 	const char * decStr;
@@ -114,7 +122,7 @@ void AES(void){
 	Sleep(1000);
 }
 
-const char *  SHA1(const char* msg){
+std::string SHA1(const char* msg){
 
 	//msg;
 	CkCrypt2 sha;
@@ -132,15 +140,17 @@ const char *  SHA1(const char* msg){
 	//  Other possible EncodingMode settings are:
 	//  "quoted-printable", "base64", and "url"
 
-	const char * hash;
+	const char* hash;
 	hash = sha.hashStringENC(msg);
+	std::string hashString;
+	hashString = hash;
 	printf("SHA1:\t %s\n\n", hash);
-
-	return hash;
+	printf("SHA1 as String:\t %s\n\n", hashString);
+	return hashString;
 }
 
 bool generatedKeys = false;
-void RSA(const char * hash){
+void RSA(){
 	CkRsa rsa;
 	//const char* firsthash = hash;
 	bool success;
@@ -169,7 +179,6 @@ void RSA(const char * hash){
 		generatedKeys = true;
 	}
 	printf("Message to encrypt with  RSA: %s\n", message);
-	printf("Hashed Message: %c\n", hash);
 
 	CkRsa rsaEncryptor;
 
@@ -197,7 +206,8 @@ void RSA(const char * hash){
 	usePrivateKey = true;
 	const char * decryptedMessage;
 	decryptedMessage = rsaDecryptor.decryptStringENC(encryptedMessage, usePrivateKey);
-	const char* newhash = SHA1(decryptedMessage);
+	//const char* newhash = SHA1(decryptedMessage);
+	printf("Decrypted: %s\n\n\n", decryptedMessage);
 
 
 	Sleep(5000);
@@ -207,8 +217,7 @@ void RSA(const char * hash){
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
-	AES();
-	RSA(SHA1(message));
+	AES(SHA1(message));
+	RSA();
 	Sleep(20000);
 }
